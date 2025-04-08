@@ -1,13 +1,19 @@
 import speech_recognition as sr
-import webbrowser
 import pyttsx3
-import musiclibrary
 import requests
+import musiclibrary
+import ai_assistance
+import newslibrary
+import open
+import weather
+import date_time
+import google_search
+import meaning
 
 r=sr.Recognizer()
-engine = pyttsx3.init() 
-newsapi = "03fa5cd2b223efd8cd52859a5f161da6"
-url = f"http://api.mediastack.com/v1/news?access_key={newsapi}&countries=in&languages=en&limit=5"
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[0].id)
 
 def speak(text):
     engine.say(text)
@@ -15,35 +21,39 @@ def speak(text):
 
 def process(c):
     if "open" in c.lower():
-        if "google" in c.lower():
-            webbrowser.open("https://google.com")
-        elif "facebook" in c.lower():
-            webbrowser.open("https://facebook.com")
-        elif "youtube" in c.lower():
-            webbrowser.open("https://youtube.com")
-        elif "linkedin" in c.lower():
-            webbrowser.open("https://linkedin.com")
-    elif c.lower().startswith("play"):
-            song = c.lower().split(" ")[1]
-            link = musiclibrary.music[song]
-            webbrowser.open(link)
+        open.open_website(c)
+    elif "play" in c.lower():
+            musiclibrary.song_search(c)
     elif "news" in c.lower():
-        speak("Fetching news...")
-        r = requests.get(url)
-        data = r.json()
-        articles = data.get("data", [])
+        newslibrary.get_news()
+    elif "ai" in c.lower():
+        print("AI activated")
+        speak("Yes sir, What can I do For You?")
+        with sr.Microphone() as source:
+                    audio = r.listen(source, timeout=4,phrase_time_limit=10)
+                    prompt = r.recognize_google(audio)
+        
+                    print(prompt)
+        ai_assistance.ask_ai(prompt)
+    elif "weather of" in c.lower():
+        weather.get_weather(c)
+    elif "time" in c.lower() or "date" in c.lower():
+        date_time.tell_date_time(c)
+    elif "google search" in c.lower():
+        google_search.googlesearch(c)
+    elif "greet" in c.lower():
+        speak("Hello Sir, You are looking great today.")
+    elif "my location" in c.lower():
+        ip_data = requests.get("https://ipinfo.io").json()
+        print(ip_data["city"], ip_data["region"], ip_data["country"])
+    elif "meaning" in c.lower():
+        meaning.get_meaning(c)
+    elif "exit" in c.lower() or "stop" in c.lower() or "quit" in c.lower():
+        print("Exiting...")
+        speak("Exiting...")
+        exit()
+    
 
-        if articles:
-            for article in articles:
-                title = article.get("title")
-                if title:
-                    print(f"News: {title}")
-                    speak(title)
-        else:
-            speak("Sorry, no news found right now.")
-    else:
-        
-        
 
 if __name__ == "__main__":
     print("initializing Jarvis...")
@@ -63,9 +73,9 @@ if __name__ == "__main__":
                 print("Jarvis activated")
                 speak("Yes sir, What can I do For You?")
                 with sr.Microphone() as source:
-                    audio = r.listen(source, timeout=3,phrase_time_limit=8)
+                    audio = r.listen(source, timeout=4,phrase_time_limit=10)
                     command = r.recognize_google(audio)
-
+                    print(command)
                 process(command)  
 
 
